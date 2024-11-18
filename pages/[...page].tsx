@@ -6,69 +6,63 @@ import Head from "next/head";
 import "../builder-registry";
 import Header from "@/components/navigation/header";
 import Footer from "@/components/navigation/footer";
+import { GetStaticProps, GetStaticPaths } from 'next';
 
-builder.init(process.env.NEXT_PUBLIC_BUILDER_API_KEY);
+const apiKey = process.env.NEXT_PUBLIC_BUILDER_API_KEY;
+if (apiKey) {
+  builder.init(apiKey);
+} else {
+  console.error("Builder API key is not defined");
+}
 
-// Define a function that fetches the Builder
-// content for a given page
-export const getStaticProps = async ({ params }) => {
-  // Fetch the builder content for the given page
+interface PageProps {
+  page: any;
+}
+
+export const getStaticProps: GetStaticProps<PageProps> = async ({ params }) => {
   const page = await builder
     .get("page", {
       userAttributes: {
-        urlPath: "/" + (params?.page?.join("/") || ""),
+        urlPath: "/" + (Array.isArray(params?.page) ? params.page.join("/") : params?.page || ""),
       },
     })
     .toPromise();
 
-  // Return the page content as props
   return {
     props: {
       page: page || null,
     },
-    // Revalidate the content every 5 seconds
     revalidate: 5,
   };
 };
 
-// Define a function that generates the
-// static paths for all pages in Builder
-export async function getStaticPaths() {
-  // Get a list of all pages in Builder
+export const getStaticPaths: GetStaticPaths = async () => {
   const pages = await builder.getAll("page", {
-    // We only need the URL field
     fields: "data.url",
     options: { noTargeting: true },
   });
 
-  // Generate the static paths for all pages in Builder
   return {
     paths: pages
       .map((page) => String(page.data?.url))
       .filter((url) => url !== "/"),
     fallback: "blocking",
   };
-}
+};
 
-// Define the Page component
-export default function Page({ page }) {
+const Page: React.FC<PageProps> = ({ page }) => {
   const router = useRouter();
   const isPreviewing = useIsPreviewing();
 
-  // If the page content is not available
-  // and not in preview mode, show a 404 error page
   if (!page && !isPreviewing) {
     return <DefaultErrorPage statusCode={404} />;
   }
 
-  // If the page content is available, render
-  // the BuilderComponent with the page content
   return (
     <>
       <Head>
         <title>{page?.data?.title}</title>
       </Head>
-      {/* Render the Builder page */}
       <Header />
       <div className="container mx-auto px-4">
         <BuilderComponent model="page" content={page || undefined} />
@@ -76,4 +70,6 @@ export default function Page({ page }) {
       <Footer />
     </>
   );
-}
+};
+
+export default Page;
