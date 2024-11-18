@@ -7,10 +7,24 @@ export default {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
+    screens: {
+      sm: '480px',
+      md: '640px',
+      lg: '992px',
+    },
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        primaryLight: '#FFF',
+        secondaryLight: '#ededed',
+        primaryDark: '#393839',
+        secondaryDark: '#dfdfdf',
+        primaryAccent: '#CF4B08',
+        secondaryAccent: '#eee47b',
+        tertiaryAccent: '#A01534',
+      },
+      fontFamily: {
+        sans: ['Lufga', 'sans-serif'],
+        serif: ['Aspira', 'serif'],
       },
     },
   },
