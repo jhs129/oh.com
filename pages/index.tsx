@@ -6,12 +6,22 @@ import Head from "next/head";
 import "../builder-registry";
 import Header from "@/components/navigation/header";
 import Footer from "@/components/navigation/footer";
+import { GetStaticProps } from "next";
 
-builder.init(process.env.NEXT_PUBLIC_BUILDER_API_KEY);
+const apiKey = process.env.NEXT_PUBLIC_BUILDER_API_KEY;
+if (apiKey) {
+  builder.init(apiKey);
+} else {
+  console.error("NEXT_PUBLIC_BUILDER_API_KEY is not defined");
+}
 builder.apiVersion = "v3";
 
+interface PageProps {
+  page: any;
+}
+
 // Define the Page component
-export default function Page({ page }) {
+const Page: React.FC<PageProps> = ({ page }) => {
   const router = useRouter();
   const isPreviewing = useIsPreviewing();
 
@@ -36,30 +46,29 @@ export default function Page({ page }) {
       <Footer />
     </>
   );
-}
-
-export const getStaticProps = async ({ params }) => {
-
-   // Fetch the builder content for the given page
-
- 
-   const page = await builder
-     .get("page", {
-       userAttributes: {
-         urlPath: "/" + (params?.page?.join("/") || ""),
-       },
-       options: {
-         vercelPreview: true,
-       },
-     })
-     .toPromise();
- 
-   // Return the page content as props
-   return {
-     props: {
-       page: page || null,
-     },
-     // Revalidate the content every 5 seconds
-     revalidate: 5,
-   };
 };
+
+export const getStaticProps: GetStaticProps = async ({ params }) => {
+  // Fetch the builder content for the given page
+  const page = await builder
+    .get("page", {
+      userAttributes: {
+        urlPath: "/" + (Array.isArray(params?.page) ? params.page.join("/") : params?.page || ""),
+      },
+      options: {
+        vercelPreview: true,
+      },
+    })
+    .toPromise();
+
+  // Return the page content as props
+  return {
+    props: {
+      page: page || null,
+    },
+    // Revalidate the content every 5 seconds
+    revalidate: 5,
+  };
+};
+
+export default Page;
